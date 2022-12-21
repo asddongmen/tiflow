@@ -216,9 +216,9 @@ func (h *OpenAPIV2) updateChangefeed(c *gin.Context) {
 		_ = c.Error(err)
 		return
 	}
-	if cfInfo.State != model.StateStopped {
+	if cfInfo.State != model.StateStopped && cfInfo.State != model.StateFailed {
 		_ = c.Error(cerror.ErrChangefeedUpdateRefused.
-			GenWithStackByArgs("can only update changefeed config when it is stopped"))
+			GenWithStackByArgs("can only update changefeed config when it is stopped or failed"))
 		return
 	}
 	cfStatus, err := h.capture.StatusProvider().GetChangeFeedStatus(ctx, changefeedID)

@@ -377,7 +377,23 @@ func TestUpdateChangefeed(t *testing.T) {
 	require.Contains(t, respErr.Code, "ErrEtcdAPIError")
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 
-	// case 8: success
+	// case 8: success when changefeed is stopped
+	helpers.EXPECT().
+		verifyUpdateChangefeedConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(oldCfInfo, &model.UpstreamInfo{}, nil).
+		Times(1)
+	etcdClient.EXPECT().
+		UpdateChangefeedAndUpstream(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).Times(1)
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequestWithContext(context.Background(), update.method,
+		fmt.Sprintf(update.url, validID), bytes.NewReader(body))
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	// case 9: success when changefeed is failed
+	oldCfInfo.State = model.StateFailed
 	helpers.EXPECT().
 		verifyUpdateChangefeedConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(oldCfInfo, &model.UpstreamInfo{}, nil).
