@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/pingcap/failpoint"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tiflow/cdc/model"
 	"github.com/pingcap/tiflow/cdc/processor/memquota"
@@ -69,6 +70,9 @@ func (w *redoWorker) handleTasks(ctx context.Context, taskChan <-chan *redoTask)
 }
 
 func (w *redoWorker) handleTask(ctx context.Context, task *redoTask) (finalErr error) {
+	failpoint.Inject("RedoWorkerHang", func() {
+		time.Sleep(time.Hour)
+	})
 	lowerBound := task.lowerBound
 	upperBound := task.getUpperBound(task.tableSink.getReceivedSorterResolvedTs())
 	lowerPhs := oracle.GetTimeFromTS(lowerBound.CommitTs)

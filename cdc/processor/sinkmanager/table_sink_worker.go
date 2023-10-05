@@ -84,6 +84,9 @@ func (w *sinkWorker) handleTasks(ctx context.Context, taskChan <-chan *sinkTask)
 }
 
 func (w *sinkWorker) handleTask(ctx context.Context, task *sinkTask) (finalErr error) {
+	failpoint.Inject("sinkWorkerHang", func() {
+		time.Sleep(time.Hour)
+	})
 	lowerBound := task.lowerBound
 	upperBound := task.getUpperBound(task.tableSink.getUpperBoundTs())
 	lowerPhs := oracle.GetTimeFromTS(lowerBound.CommitTs)
