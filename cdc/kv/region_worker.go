@@ -197,6 +197,11 @@ func (w *regionWorker) checkShouldExit() error {
 	// If there is no region maintained by this region worker, exit it and
 	// cancel the gRPC stream.
 	if empty && w.pendingRegions.len() == 0 {
+		log.Info("fizz-4:region state empty, cancel stream to store",
+			zap.Stringer("changefeed", w.session.changefeed),
+			zap.Int64("tableID", w.session.tableID),
+			zap.String("tableName", w.session.id),
+			zap.String("store", w.storeAddr))
 		w.cancelStream(time.Duration(0))
 		return cerror.ErrRegionWorkerExit.GenWithStackByArgs()
 	}
