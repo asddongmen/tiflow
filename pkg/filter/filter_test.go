@@ -23,6 +23,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewFilter(t *testing.T) {
+	cfg := config.GetDefaultReplicaConfig()
+	cfg.Filter.Rules = []string{`db\-test.*`, `db\-test2.t\-1`}
+	filter, err := NewFilter(cfg, "")
+	require.Nil(t, err)
+	require.False(t, filter.ShouldIgnoreTable("db-test", "table"))
+	require.False(t, filter.ShouldIgnoreTable("db-test2", "t-1"))
+}
+
 func TestShouldUseDefaultRules(t *testing.T) {
 	t.Parallel()
 
