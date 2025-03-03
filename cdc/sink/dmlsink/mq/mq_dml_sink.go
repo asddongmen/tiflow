@@ -150,10 +150,11 @@ func (s *dmlSink) WriteEvents(txns ...*dmlsink.CallbackableEvent[*model.SingleTa
 		return errors.Trace(errors.New("dead dmlSink"))
 	}
 	// merge the split row callback into one callback
-	mergedCallback := func(outCallback func(), totalCount uint64) func() {
+	mergedCallback := func(outCallback func(), totalCount uint64, commitTs uint64) func() {
 		var acked atomic.Uint64
 		return func() {
 			if acked.Add(1) == totalCount {
+				log.Debug("txn callback", zap.Uint64("commitTs", commitTs), zap.Uint64("rowCount", totalCount))
 				outCallback()
 			}
 		}
@@ -165,7 +166,7 @@ func (s *dmlSink) WriteEvents(txns ...*dmlsink.CallbackableEvent[*model.SingleTa
 			txn.Callback()
 			continue
 		}
-		callback := mergedCallback(txn.Callback, uint64(len(txn.Event.Rows)))
+		callback := mergedCallback(txn.Callback, uint64(len(txn.Event.Rows)), txn.Event.CommitTs)
 
 		for _, row := range txn.Event.Rows {
 			topic := s.alive.eventRouter.GetTopicForRowChange(row)
